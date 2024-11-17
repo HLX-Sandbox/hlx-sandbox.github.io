@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/constants.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoráriosLX - Sandbox</title>
+    <link rel="icon" href="/static/logo1.svg" sizes="256x256">
+    <link href="/style.css" rel="stylesheet">
+    <meta property="og:title" content="HoráriosLX - Sandbox" />
+    <meta property="og:description" content="Estatísticas e outras coisas para os nerds dos transportes :P" />
+    <meta property="og:image" content="https://hlx-sandbox.github.io/static/logo1.png" />
+    <meta property="og:url" content="https://hlx-sandbox.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0047AB">
+    <meta property="og:locale" content="pt_PT" />
+</head>
+
+<body>
+    <header>
+        <img src="/static/logo1.svg"></img>
+        <h1><a href="/">HoráriosLX - Sandbox</a></h1>
+        <div class="buttons">
+            <a href="/vehicles/">Histórico de viagens</a>
+            <span class="split">|</span>
+            <a href="/map/">Mapa Comunitário</a>
+        </div>
+    </header>
+    <div class="h-spacer"></div>
+    <div class="contents">
+        <section class="intro">
+            <section>
+                <h2>Estatísticas</h2>
+                <div class="statsBox">
+                    <h3><span style="color: var(--accent-secondary);" id="stats-vehicles">0</span><br>veículos</h3>
+                    <h3><span style="color: var(--accent-secondary);" id="stats-lines">0</span><br>linhas</h3>
+                </div>
+            </section>
+            <section class="div-split">
+                <h2>Pesquisar</h2>
+                <div class="searchContainer" style="position: relative;">
+                    <input id="search" placeholder="Trip ID/Linha/Nº do autocarro" autocomplete="off">
+                    <div class="autocomplete hidden" id="autocomplete"></div>
+                </div>
+                <div class="buttonsRow">
+                    <button id="schedules" class="disabled">Ver informações</button>
+                </div>
+            </section>
+        </section>
+    </div>
+    <div class="h-spacer"></div>
+    <section class="line-usage">
+        <h2>Linhas mais utilizadas</h2>
+        <div class="opts">
+            <div class="zones">
+                <button id="z1" class="selected">Zona 1</button>
+                <button id="z2" class="selected">Zona 2</button>
+                <button id="z3" class="selected">Zona 3</button>
+                <button id="z4" class="selected">Zona 4</button>
+            </div>
+            <div class="lineTypes">
+                <button id="prox" style="background-color: #3D85C6 !important;" class="selected">Próxima</button>
+                <button id="longa" style="background-color: #C61D23 !important;" class="selected">Longa</button>
+                <button id="mar" style="background-color: #0C807E !important;" class="selected">Mar</button>
+                <button id="rap" style="background-color: #FDB71A !important;" class="selected">Rápida</button>
+                <button id="inter" style="background-color: #BB3E96 !important;" class="selected">Interregional</button>
+                <button id="cp" style="background-color: #2A9057 !important;" class="selected">CP</button>
+            </div>
+            <button id="invert">Inverter</button>
+            <div class="type">
+                <button id="px" class="selected">Px/Viagem</button>
+                <button id="pxt">Px totais</button>
+                <button id="pxd">Px diários</button>
+            </div>
+        </div>
+        <div class="line-usage-container" id="lines">
+        </div>
+    </section>
+    <div class="h-spacer"></div>
+    <footer>
+        <a href="https://horarios-lx.github.io/contactos/">Contactos</a>
+        <span class="split">|</span><a href="https://github.com/Horarios-LX/horarios-lx.github.io">Repositório</a>
+    </footer>
+    <script>
+        let res;
+        let service;
+        let linesDiv = document.getElementById("lines")
+
+        let opts = document.querySelector(".opts")
+
+        let inverted = false;
+        opts.querySelector("#invert").onclick = () => {
+            opts.querySelector("#invert").classList.toggle("selected")
+            inverted = opts.querySelector("#invert").classList.contains("selected")
+            regenGraph()
+        }
+
+        let pxFilters = ["px","pxt","pxd"]
+
+        let sortType = "px";
+
+        pxFilters.forEach(p => {
+            opts.querySelector(".type #" + p).onclick = () => {
+                pxFilters.forEach(p2 => {
+                    if(p2 !== p);
+                    opts.querySelector(".type #" + p2).classList.remove("selected")
+                })
+                opts.querySelector(".type #" + p).classList.toggle("selected")
+                opts.querySelector(".type #" + p).classList.contains("selected") ? sortType = p : sortType = "px";
+                opts.querySelector(".type #" + sortType).classList.add("selected");
+                regenGraph()
+            }
+        })
+
+        let types = ["prox","longa","mar","rap","inter","cp"]
+        let typeToggle = {}
+        types.map(a => typeToggle[a] = true)
+        types.forEach(p => {
+            opts.querySelector(".lineTypes #" + p).onclick = () => {
+                if(Object.values(typeToggle).filter(a => a).length === 6) {
+                    Object.keys(typeToggle).forEach(a => {
+                        typeToggle[a] = false;
+                        opts.querySelector(".lineTypes #" + a).classList.remove("selected")
+                    }) 
+                }
+                    opts.querySelector(".lineTypes #" + p).classList.toggle("selected")
+                    typeToggle[p] = opts.querySelector(".lineTypes #" + p).classList.contains("selected")
+                    if(!Object.values(typeToggle).some(a => a)) Object.keys(typeToggle).forEach(a => {
+                        typeToggle[a] = true;
+                        opts.querySelector(".lineTypes #" + a).classList.add("selected")
+                    })
+                regenGraph()
+            }
+        })
+
+        let zones = ["z1","z2","z3","z4"]
+        let zonesToggle = {z1: true, z2: true, z3: true, z4: true}
+        zones.forEach(p => {
+            opts.querySelector(".zones #" + p).onclick = () => {
+                if(Object.values(zonesToggle).filter(a => a).length === 4) {
+                    Object.keys(zonesToggle).forEach(a => {
+                        zonesToggle[a] = false;
+                        opts.querySelector(".zones #" + a).classList.remove("selected")
+                    }) 
+                }
+                opts.querySelector(".zones #" + p).classList.toggle("selected")
+                zonesToggle[p] = opts.querySelector(".zones #" + p).classList.contains("selected")
+                if(!Object.values(zonesToggle).some(a => a)) Object.keys(zonesToggle).forEach(a => {
+                    zonesToggle[a] = true;
+                    opts.querySelector(".zones #" + a).classList.add("selected")
+                })
+                regenGraph()
+            }
+        })
+
+        let lines;
+
+
+        
+        document.body.onload = async () => {
+            fetch(CLOUDFLARED + "stats").then(r => r.json()).then(r => {
+                let vec = document.getElementById("stats-vehicles")
+                let lines = document.getElementById("stats-lines")
+                vec.textContent = r.vehicles;
+                lines.textContent = r.lines;
+                if (r.vehicles === 1) {
+                    vec.parentElement.innerHTML = vec.outerHTML + "<br>veículo"
+                }
+                vec.classList.remove("loading")
+                lines.classList.remove("loading")
+            })
+
+            lines = await fetch(API_BASE2 + "lines").then(r => r.json())
+
+            service = (await fetch(API_BASE2 + "metrics/service/all").then(r => r.json())).filter(a => a.operational_day.startsWith("202411")).reduce((acc, d) => {
+                if (!acc[d.line_id]) acc[d.line_id] = { p: 0, t: 0 }
+                acc[d.line_id].p += d.pass_trip_count;
+                acc[d.line_id].t += d.total_trip_count;
+                return acc;
+            }, {})
+            res = await fetch("https://api.cmet.pt/metrics/demand/by_line").then(r => r.json()).then(r => r.map(a => {
+                a.by_day2 = a.by_day.filter(b => parseInt(b.day.split("-")[2]) < 13)
+                a.total_qty = a.by_day2.reduce((acc, b) => acc + b.qty, 0)
+                return a;
+            }))
+
+            res2 = structuredClone(res).map(a => {
+                a.total_qty = Math.ceil((!service[a.line_id] || service[a.line_id].p === 0 ? 0 : (a.total_qty / service[a.line_id].p)) * 100) / 100
+                return a;
+            }).sort((b, a) => a.total_qty - b.total_qty);
+
+            genTable(res2);
+        }
+
+        function regenGraph() {
+            eres = structuredClone(res).filter(a => {
+                if(zonesToggle.z4 && a.line_id.startsWith("4")) return a;
+                if(zonesToggle.z3 && a.line_id.startsWith("3")) return a;
+                if(zonesToggle.z2 && a.line_id.startsWith("2")) return a;
+                if(zonesToggle.z1 && a.line_id.startsWith("1")) return a;
+            }).filter(a => {
+                line = lines.find(b => b.id === a.line_id)
+                if(typeToggle.prox && line.color === "#3D85C6") return a;
+                if(typeToggle.longa && line.color === "#C61D23") return a;
+                if(typeToggle.mar && line.color === "#0C807E") return a;
+                if(typeToggle.rap && line.color === "#FDB71A") return a;
+                if(typeToggle.inter && line.color === "#BB3E96") return a;
+                if(typeToggle.cp && line.color === "#2A9057") return a;
+            })
+            eres = eres.map(a => {
+                if(sortType === "px") a.total_qty = Math.ceil((!service[a.line_id] || service[a.line_id].p === 0 ? 0 : (a.total_qty / service[a.line_id].p)) * 100) / 100
+                if(sortType === "pxd") a.total_qty = Math.ceil((!a.by_day || a.by_day.length === 0 ? 0 : (a.total_qty / a.by_day.length)) * 100) / 100
+                if(sortType === "pxt") a.total_qty = a.by_day.reduce((acc, b) => acc + b.qty, 0)
+                return a;
+            }).sort((b, a) => {
+                return inverted ? b.total_qty - a.total_qty : a.total_qty - b.total_qty
+            });
+            genTable(eres)
+        }
+
+        function genTable(a) {
+            linesDiv.innerHTML = "";
+            a.forEach((line, index) => {
+                lineInfo = lines.find(a => a.id === line.line_id)
+                let div = document.createElement("div")
+                div.onclick = () => window.location.href = "/stats/line/?l=" + line.line_id
+                div.className = "line-usage-el"
+                div.innerHTML = `<p class="upper"><span class="line" style="background-color: ${lineInfo.color};">${line.line_id.replaceAll("1998","CP")}</span><strong>${lineInfo.long_name}</strong></p><p class="lower"><strong>#${index + 1} | ${line.total_qty}</strong> passageiro${line.total_qty === 1 ? "" : "s"} ${sortType === "px" || !sortType ? "por viagem" : sortType === "pxd" ? "por dia" : "nos últimos 15 dias"}</p>`
+                linesDiv.appendChild(div)
+            })
+        }
+    </script>
+</body>
+
+</html>

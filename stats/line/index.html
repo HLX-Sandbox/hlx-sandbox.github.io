@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/constants.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoráriosLX - Sandbox</title>
+    <link rel="icon" href="/static/logo1.svg" sizes="256x256">
+    <link href="/style.css" rel="stylesheet">
+    <meta property="og:title" content="HoráriosLX - Sandbox" />
+    <meta property="og:description" content="Estatísticas e outras coisas para os nerds dos transportes :P" />
+    <meta property="og:image" content="https://hlx-sandbox.github.io/static/logo1.png" />
+    <meta property="og:url" content="https://hlx-sandbox.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0047AB">
+    <meta property="og:locale" content="pt_PT" />
+</head>
+
+<body>
+    <header>
+        <img src="/static/logo1.svg"></img>
+        <h1><a href="/">HoráriosLX - Sandbox</a></h1>
+        <div class="buttons">
+            <a href="/vehicles/">Histórico de viagens</a>
+            <span class="split">|</span>
+            <a href="/map/">Mapa Comunitário</a>
+        </div>
+    </header>
+    <div class="h-spacer"></div>
+    <div class="contents">
+        <h2 id="line" style="color: black"><span class="line">1000</span> Linha | Circular</h2>
+        <section class="intro">
+            <section>
+                <h2>Estatísticas</h2>
+                <div class="statsBox">
+                    <h3 id="stats-vehicles"><span style="color: var(--accent-secondary);">0</span><br>veículos</h3>
+                    <h3 id="stats-px"><span style="color: var(--accent-secondary);">0</span><br>passageiros</h3>
+                </div>
+                <p class="note">*nos últimos 15 dias</p>
+            </section>
+            <section class="div-split">
+                <h2>Passageiros (Hoje)</h2>
+                <svg id="stats-today" width="100%" height="8em" style="background-color: #CFCFCF;" xmlns="http://www.w3.org/2000/svg">
+                    
+                  </svg>
+                <p id="stats-hover" style="text-align: center; margin: 0px; display: none;">20 horas: 0 passageiros</p>
+            </section>
+        </section>
+    </div>
+    <div class="h-spacer"></div>
+    <section class="line-usage">
+        <h2>Últimos serviços</h2>
+        <div class="line-usage-container" id="lines">
+        </div>
+    </section>
+    <div class="h-spacer"></div>
+    <footer>
+        <a href="https://horarios-lx.github.io/contactos/">Contactos</a>
+        <span class="split">|</span><a href="https://github.com/Horarios-LX/horarios-lx.github.io">Repositório</a>
+    </footer>
+    <script src="./main.js"></script>
+</body>
+
+</html>
