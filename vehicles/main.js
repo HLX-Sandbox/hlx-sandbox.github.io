@@ -14,14 +14,33 @@ info.style.display = "none";
 
 let selMarker;
 
-const socket = new WebSocket(CLOUDFLARED2 + ':8079'); 
+let socket = new WebSocket(CLOUDFLARED2); 
 
-socket.onopen = () => { 
+function onopen() { 
     socket.send("ping")
     setInterval(() => {
         socket.send("ping")
     }, 30*1000)     
 }; 
+
+function onmessage(msg) {
+    if(msg.data !== "OK") {
+        msg = JSON.parse(msg.data)
+        if(!msg.op === 21 || !selMarker) return;
+        if(!positionCache[selMarker]) positionCache[selMarker] = []
+        positionCache[selMarker].push(msg.i.g)
+        if (!outOfService && !headsignCache[msg.i.p]) fetch(CLOUDFLARED + "patterns/" + msg.i.p.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")).then(r => r.json()).then(s => {
+            info.querySelector("#dest").innerHTML = s.headsign || "DESCONHECIDO"
+            headsignCache[s.id] = s.headsign;
+        })
+        vehicles.find(a => a.id === selMarker).stopId = msg.i.s;
+        if(vehicles.find(a => a.id === selMarker).tripId !== msg.i.t) positionCache[selMarker] = [];
+        vehicles.find(a => a.id === selMarker).tripId = msg.i.t;
+        customLayer._redraw()
+    }
+}
+
+socket.onopen = onopen;
 
 let headsignCache = {};
 
@@ -80,8 +99,9 @@ const CustomCanvasLayer = L.Layer.extend({
                     point.col = "#000000"
                     outOfService = true;
                 }
-                fetch(CLOUDFLARED + "sandbox/vehicles/" + point.id.split("|")[0] + "/" + point.id.split("|")[1] + "/trip").then(r => r.json()).then(s => {
+                fetch(CLOUDFLARED + "sandbox/vehicles/" + point.id.split("|")[0] + "/" + point.id.split("|")[1] + "/trip").then(r => r.json()).then(async s => {
                     if(!s.nodes) return this._redraw()
+                    s.nodes[0] = "0|" + s.nodes[0]
                     positionCache[point.id] = s.nodes.map(a => a.split("|").slice(1, 3)).map(b => {
                         b[0] = parseFloat(b[0]) + parseFloat(s.pos[0])+38.7169
                         b[1] = parseFloat(b[1]) + parseFloat(s.pos[1])-9.1395
@@ -102,6 +122,17 @@ const CustomCanvasLayer = L.Layer.extend({
                     info.querySelector("#lines").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).lines.filter(a => a.text !== point.text).reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
                     info.querySelector("#trip").innerHTML = vehicles.find(a => a.id === point.id).tripId
                     info.style.display = "block";
+                    if ( socket.readyState === 3 ) {
+                        socket.close();
+                        socket = new WebSocket(CLOUDFLARED2);
+                
+                        // wait until new connection is open
+                        while (socket.readyState !== 1) {
+                          await new Promise(r => setTimeout(r, 250));
+                        }
+                        socket.onopen = onopen;
+                        socket.onmessage = onmessage;
+                    }
                     socket.send(JSON.stringify({op: "20", d: point.id}))
                     map.flyTo([point.lat, point.lon], 17, {
                         animate: true,
@@ -182,6 +213,7 @@ const CustomCanvasLayer = L.Layer.extend({
             ctx.lineCap = "round";
             ctx.beginPath();
             positionCache[selMarker] = positionCache[selMarker];//.slice(0, 120);
+            if(!positionCache[selMarker]) return selMarker = undefined;
             for (let i = 0; i < positionCache[selMarker].length - 1; i++) {
                 pointA = positionCache[selMarker][i]
                 pointB = positionCache[selMarker][i + 1]
@@ -251,21 +283,7 @@ const CustomCanvasLayer = L.Layer.extend({
     },
 });
 
-socket.onmessage = (msg) => {
-    if(msg.data !== "OK") {
-        msg = JSON.parse(msg.data)
-        if(!msg.op === 21 || !selMarker) return;
-        positionCache[selMarker].push(msg.i.g)
-        if (!outOfService && !headsignCache[msg.i.p]) fetch(CLOUDFLARED + "patterns/" + msg.i.p.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")).then(r => r.json()).then(s => {
-            info.querySelector("#dest").innerHTML = s.headsign || "DESCONHECIDO"
-            headsignCache[s.id] = s.headsign;
-        })
-        vehicles.find(a => a.id === selMarker).stopId = msg.i.s;
-        if(vehicles.find(a => a.id === selMarker).tripId !== msg.i.t) positionCache[selMarker] = [];
-        vehicles.find(a => a.id === selMarker).tripId = msg.i.t;
-        customLayer._redraw()
-    }
-}
+socket.onmessage = onmessage;
 
 map = L.map("map", {
     renderer: L.canvas(),
@@ -296,7 +314,7 @@ setInterval(() => {
     fetchVehicles()
 }, 30000)
 
-info.querySelector("#view").onclick = () => selMarker ? window.location.href = "/historico/?rg=" + selMarker.split("|")[0] + "&id=" + selMarker.split("|")[1] : alert("selMarker is undefined")
+info.querySelector("#view").onclick = () => selMarker ? window.location.href = "/history/?rg=" + selMarker.split("|")[0] + "&id=" + selMarker.split("|")[1] : alert("selMarker is undefined")
 
 function fetchVehicles() {
     fetch(CLOUDFLARED + "vehicles").then(r => r.json()).then(v => {
