@@ -1,6 +1,6 @@
-let CLOUDFLARED = "https://springer-hz-gasoline-pas.trycloudflare.com/"
+let CLOUDFLARED = "https://issues-ide-long-claire.trycloudflare.com/"
 
-let CLOUDFLARED2 = "ws://localhost";
+let CLOUDFLARED2 = "wss://showers-pixel-logs-explanation.trycloudflare.com";
 
 const API_BASE = "https://api.carrismetropolitana.pt/";
 
