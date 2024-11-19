@@ -197,7 +197,11 @@ async function main() {
                 timeline.querySelector("#services").innerHTML = (await Promise.all(tripIndexes.map(async (a, i) => {
                     if(!patternCache[a.p]) patternCache[a.p] = fetch(CLOUDFLARED + "patterns/" + a.p).then(r => r.json());
                     if(patternCache[a.p].then) patternCache[a.p] = await Promise.resolve(patternCache[a.p]);
-                    t = "<div style=\"background-color:" + patternCache[a.p].color + "3f; width:" + Math.round(a.dif/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: " + patternCache[a.p].color + ";\">" + a.p.split("_")[0].replaceAll("1998","CP") + "</span></div>"
+                    t = "<div style=\"background-color:" + patternCache[a.p].color + "3f; width:" + Math.round(a.len/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: " + patternCache[a.p].color + ";\">" + a.p.split("_")[0].replaceAll("1998","CP") + "</span></div>"
+                    if(a.dif > a.len) {
+                        t += "<div style=\"background-color: #0000003f; width:" + Math.round((a.dif - a.len)/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: #000000;\">N/D</span></div>"
+                        
+                    }
                     return t;
                 }))).reduce((acc, val) => acc + val, "")
             });
