@@ -156,8 +156,19 @@
 
         let lines;
 
-
+        let minDate = (new Date(Date.now() - 15*24*60*60*1000)).toISOString().split("T")[0]
         
+        function parseTime(str) {
+            if(!str.includes("-")) str = str.substring(0, 4) + "-" + str.substring(4, 6) + "-" + str.substring(6, 8)
+            str = str.split("-")
+            let y = parseInt(str[0])
+            let m = parseInt(str[1])
+            let d = parseInt(str[2])
+            return [y, m, d]
+        }
+
+        minDate = parseTime(minDate)
+
         document.body.onload = async () => {
             fetch(CLOUDFLARED + "stats").then(r => r.json()).then(r => {
                 let vec = document.getElementById("stats-vehicles")
@@ -173,18 +184,26 @@
 
             lines = await fetch(API_BASE2 + "lines").then(r => r.json())
 
-            service = (await fetch(API_BASE2 + "metrics/service/all").then(r => r.json())).filter(a => a.operational_day.startsWith("202411")).reduce((acc, d) => {
-                if (!acc[d.line_id]) acc[d.line_id] = { p: 0, t: 0 }
-                acc[d.line_id].p += d.pass_trip_count;
-                acc[d.line_id].t += d.total_trip_count;
+            service = {};
+            Object.values((await fetch(API_BASE2 + "metrics/service/all").then(r => r.json())).reduce((acc, item) => {
+                if(parseTime(item.operational_day)[0] < minDate[0] || parseTime(item.operational_day)[1] < minDate[1] || parseTime(item.operational_day)[2] < minDate[2]) return acc;
+                if(!acc[item.line_id]) acc[item.line_id] = [];
+                acc[item.line_id].push(item)
+                return acc;
+            }, {})).map(z => {
+                return z.reduce((acc, d) => {
+                    
+                if (!service[d.line_id]) service[d.line_id] = { p: 0, t: 0 }
+                service[d.line_id].p += d.pass_trip_count;
+                service[d.line_id].t += d.total_trip_count;
                 return acc;
             }, {})
+            })
             res = await fetch("https://api.cmet.pt/metrics/demand/by_line").then(r => r.json()).then(r => r.map(a => {
-                a.by_day2 = a.by_day.filter(b => parseInt(b.day.split("-")[2]) < 13)
+                a.by_day2 = a.by_day.slice(-15)
                 a.total_qty = a.by_day2.reduce((acc, b) => acc + b.qty, 0)
                 return a;
             }))
-
             res2 = structuredClone(res).map(a => {
                 a.total_qty = Math.ceil((!service[a.line_id] || service[a.line_id].p === 0 ? 0 : (a.total_qty / service[a.line_id].p)) * 100) / 100
                 return a;

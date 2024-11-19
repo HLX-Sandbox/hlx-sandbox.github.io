@@ -11,9 +11,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     useOnlyCache: false
 }).addTo(map);
 
-let { rg, id } = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop) });
+let { rg, id, extended } = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop) });
 
 let timeline = document.getElementById("timeline")
+
+let stops = [];
+
+stops = fetch(CLOUDFLARED + "stops").then(r => r.json()).catch(() => fetch("https://api.cmet.pt/stops").then(r => r.json()))
 
 let tripIndexes = [];
 
@@ -94,23 +98,23 @@ const CustomCanvasLayer = L.Layer.extend({
             for (let i = 0; i < routeSection.length - 1; i++) {
                 pointA = routeSection[i]
                 pointB = routeSection[i + 1]
-                posA = map.latLngToLayerPoint(pointA.slice(0, 2));
+                posA = map.latLngToLayerPoint([pointA.lat, pointA.lon]);
                 adjustedPosA = posA.subtract(topLeft).add([buffer, buffer]);
-                posB = map.latLngToLayerPoint(pointB.slice(0, 2));
+                posB = map.latLngToLayerPoint([pointB.lat, pointB.lon]);
                 adjustedPosB = posB.subtract(topLeft).add([buffer, buffer]);
                 if((adjustedPosA.x < 0 && adjustedPosB.x < 0) || (adjustedPosA.x > ctx.width && adjustedPosB.x > ctx.width) || (adjustedPosA.y < 0 && adjustedPosB.y < 0) || (adjustedPosA.y > ctx.height && adjustedPosB.y > ctx.height)) continue;
-                if(Math.abs(pointA[0] - pointB[0]) > 0.05 || Math.abs(pointA[1] - pointB[1]) > 0.05) continue;
+                if(Math.abs(pointA.lat - pointB.lat) > 0.05 || Math.abs(pointA.lon - pointB.lon) > 0.05) continue;
                 ctx.beginPath();
                 ctx.moveTo(adjustedPosA.x, adjustedPosA.y);
                 ctx.lineTo(adjustedPosB.x, adjustedPosB.y)
-                ctx.strokeStyle = pointB[2] + Math.round(alpha * 255).toString("16").padStart(2, "0");
+                ctx.strokeStyle = route.color + Math.round(alpha * 255).toString("16").padStart(2, "0");
                 ctx.stroke();
                 ctx.moveTo(adjustedPosB.x, adjustedPosB.y)
             }
             ctx.stroke()
             alpha = 1
             ctx.globalAlpha = 1;
-            const pos = map.latLngToLayerPoint(routeSection[routeSection.length - 1].slice(0, 2));
+            const pos = map.latLngToLayerPoint([routeSection[routeSection.length - 1].lat, routeSection[routeSection.length - 1].lon]);
             const adjustedPos = pos.subtract(topLeft).add([buffer, buffer]);
             if (
                 adjustedPos.x >= 0 &&
@@ -142,51 +146,126 @@ customLayer = new CustomCanvasLayer().addTo(map);
 
 async function main() {
     trip = await fetch(CLOUDFLARED + "sandbox/vehicles/" + rg + "/" + id + "/trip").then(r => r.json());
-    fetch(CLOUDFLARED + "sandbox/trip-history/now/data").then(r => r.text()).then(tripFull => {
+    fetch(CLOUDFLARED + "sandbox/trip-history/now/data").then(r => r.text()).then(async tripFull => {
         tripFull = tripFull.split("\n=").filter(a => a.endsWith("<ID:" + rg + "|" + id + ">"))[0]
         tripFull = tripFull.split("\n")
+        tripFull = tripFull.slice(1, -1)
+        await Promise.all(tripFull.reverse().map(async t => {
+            t = t.split("@")
+            let data = {p: t[2], d: parseInt(t[3]), trip: t[0], pos: t[1].split("+").map(a => parseFloat(a)), t: ("0|" + t[4]).split(":").map(a => a.split("|"))}
+            data.t = data.t.map(a => ({lat: parseFloat(data.pos[0]) + parseFloat(a[1]) +38.7169, lon: parseFloat(data.pos[1]) + parseFloat(a[2]) -9.1395, stop: (a[3] || null), timestamp: parseInt(a[0]) }))
+            data.dif = start - data.d;
+            data.len = data.t[data.t.length - 1].timestamp
+            max += data.dif;
+            start = data.d;
+            timeline.querySelector("#start").innerHTML = parseTime(start)
+            timeline.querySelector("#end").innerHTML = parseTime(start + max)
+            slider.max = max;
+            slider.value = parseInt(slider.value) + data.dif;
+            timeline.querySelector("#current").innerHTML = parseTime(start + max)
+            tripIndexes.unshift(data)
+        }));
+        tripIndexes = tripIndexes.sort((a, b) => a.d - b.d)
+        timeline.querySelector("#services").innerHTML = (await Promise.all(tripIndexes.map(async (a, i) => {
+            if(!patternCache[a.p]) patternCache[a.p] = fetch(CLOUDFLARED + "patterns/" + a.p).then(r => r.json());
+            if(patternCache[a.p].then) patternCache[a.p] = await Promise.resolve(patternCache[a.p]);
+            t = "<div style=\"background-color:" + patternCache[a.p].color + "3f; width:" + Math.round(a.dif/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: " + patternCache[a.p].color + ";\">" + a.p.split("_")[0].replaceAll("1998","CP") + "</span></div>"
+            return t;
+        }))).reduce((acc, val) => acc + val, "")
+
+        if(extended && extended === "1") {
+            fetch(CLOUDFLARED + "sandbox/trip-history/" + (new Date(Date.now() - 24*60*60*1000)).toLocaleDateString("en-GB").replaceAll("/","") + "/data").then(r => r.text()).then(async tripFull => {
+                tripFull = tripFull.split("\n=").filter(a => a.endsWith("<ID:" + rg + "|" + id + ">"))[0]
+                tripFull = tripFull.split("\n")
+                tripFull = tripFull.slice(1, -1)
+                await Promise.all(tripFull.reverse().map(async t => {
+                    t = t.split("@")
+                    let data = {p: t[2], d: parseInt(t[3]), trip: t[0], pos: t[1].split("+").map(a => parseFloat(a)), t: ("0|" + t[4]).split(":").map(a => a.split("|"))}
+                    data.t = data.t.map(a => ({lat: parseFloat(data.pos[0]) + parseFloat(a[1]) +38.7169, lon: parseFloat(data.pos[1]) + parseFloat(a[2]) -9.1395, stop: (a[3] || null), timestamp: parseInt(a[0]) }))
+                    data.dif = start - data.d;
+                    data.len = data.t[data.t.length - 1].timestamp
+                    max += data.dif;
+                    start = data.d;
+                    timeline.querySelector("#start").innerHTML = parseTime(start)
+                    timeline.querySelector("#end").innerHTML = parseTime(start + max)
+                    slider.max = max;
+                    slider.value = parseInt(slider.value) + data.dif;
+                    timeline.querySelector("#current").innerHTML = parseTime(start + max)
+                    tripIndexes.unshift(data)
+                }));
+                tripIndexes = tripIndexes.sort((a, b) => a.d - b.d)
+                timeline.querySelector("#services").innerHTML = (await Promise.all(tripIndexes.map(async (a, i) => {
+                    if(!patternCache[a.p]) patternCache[a.p] = fetch(CLOUDFLARED + "patterns/" + a.p).then(r => r.json());
+                    if(patternCache[a.p].then) patternCache[a.p] = await Promise.resolve(patternCache[a.p]);
+                    t = "<div style=\"background-color:" + patternCache[a.p].color + "3f; width:" + Math.round(a.dif/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: " + patternCache[a.p].color + ";\">" + a.p.split("_")[0].replaceAll("1998","CP") + "</span></div>"
+                    return t;
+                }))).reduce((acc, val) => acc + val, "")
+            });
+        }
     });
     trip.nodes[0] = "0|" + trip.nodes[0]
     trip.nodes = trip.nodes.map(a => a.split("|")).map(a => ({lat: parseFloat(trip.pos[0]) + parseFloat(a[1]) +38.7169, lon: parseFloat(trip.pos[1]) + parseFloat(a[2]) -9.1395, stop: (a[3] || null), timestamp: parseInt(a[0]) }))
 
-    /*for(let i = 0; i < trip12h.length; i++) {
-        if(!tripIndexes.find(a => a.i === trip12h[i][4]) || lastIndex !== trip12h[i][4]) tripIndexes.push({i: trip12h[i][4], a: i});
-        lastIndex = trip12h[i][4];
-    }*/
-    tripIndexes.push({p: trip.pattern_id, t: trip.nodes, d: trip.d, len: trip.nodes[trip.nodes.length - 1].timestamp})
+    tripIndexes.push({p: trip.pattern_id, t: trip.nodes, trip: trip.lastTrip, d: trip.d, len: trip.nodes[trip.nodes.length - 1].timestamp, dif: trip.nodes[trip.nodes.length - 1].timestamp})
     tripIndexes.map(async p => {
         if(!patternCache[p.p]) patternCache[p.p] = fetch(CLOUDFLARED + "patterns/" + p.p).then(r => r.json());
     })
+    tripIndexes = tripIndexes.sort((a, b) => a.d - b.d)
     now = Math.floor(Date.now()/1000)
     let slider = timeline.querySelector("#slider");
     let len = trip.nodes.length;
     let max = trip.nodes[len-1].timestamp;
     slider.max = max;
     start = trip.d;
+    routeSection = tripIndexes.filter(a => a.d < a.d + max)[0].t.filter(a => a.timestamp <= max)
+
     timeline.querySelector("#start").innerHTML = parseTime(start)
     timeline.querySelector("#end").innerHTML = parseTime(start + max)
     slider.value = trip.nodes[len-1].timestamp;
     timeline.querySelector("#current").innerHTML = parseTime(start + max)
     timeline.querySelector("#services").innerHTML = (await Promise.all(tripIndexes.map(async (a, i) => {
-        console.log(a)
         if(patternCache[a.p].then) patternCache[a.p] = await Promise.resolve(patternCache[a.p]);
-        console.log(patternCache[a.p])
-        console.log(max)
         return "<div style=\"background-color:" + patternCache[a.p].color + "3f; width:" + Math.round(a.len/max*10000)/100 + "%\"><span class=\"line\" style=\"background-color: " + patternCache[a.p].color + ";\">" + a.p.split("_")[0].replaceAll("1998","CP") + "</span></div>"
     }))).reduce((acc, val) => acc + val, "")
 
-    /*let r = tripIndexes.sort((a, b) => b.a - a.a).find(a => a.a <= slider.value)
-        routeSection = trip12h.slice(r.a, slider.value)
-        route = {text: r.i, col: routeSection[0][2]}
-        customLayer._redraw()*/
+    route = tripIndexes.filter(a => a.d <= a.d + max).map(a => ({...a, text: a.p.split("_")[0], col: patternCache[a.p].color}))[0]
+
+    if(stops.then) stops = await Promise.resolve(stops)
+
+    info.querySelector("#line").innerHTML = route.text
+    info.querySelector("#line").style = "background-color: " + route.col + ";"
+    info.querySelector("#dest").innerHTML = patternCache[route.p].long_name //outOfService ? "Fora de serviço" : headsignCache[vehicles.find(a => a.id === point.id).tripId.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")] || "Carregando..."
+    info.querySelector("#vec").innerHTML = "# veículo: " + rg + "|" + id
+    info.querySelector("#stop").innerHTML = stops.find(a => a.id === route.t.filter(a => a.stop)[route.t.filter(a => a.stop).length - 1].stop).name || "Sem paragem"
+    info.querySelector("#lines").innerHTML = stops.find(a => a.id === route.t.filter(a => a.stop)[route.t.filter(a => a.stop).length - 1].stop).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
+    info.querySelector("#trip").innerHTML = route.trip
+    customLayer._redraw()
+
     slider.addEventListener("input", function () {
         timeline.querySelector("#current").innerHTML = parseTime(start + parseInt(slider.value))
-        //let r = tripIndexes.sort((a, b) => b.a - a.a).find(a => a.a < slider.value)
-        //routeSection = trip12h.slice(r.a, slider.value)
-        //route = {text: r.i, col: (routeSection.length > 0 ? routeSection[0][2] : null)}
+        trip = tripIndexes.filter(a => a.d + a.len >= start + parseInt(slider.value) && a.d <= start + parseInt(slider.value));
+        if(trip.length === 0) {
+            trip = tripIndexes.filter(a => a.d + a.len <= start + parseInt(slider.value)).reverse();
+            routeSection = trip[0].t;
+        } else {
+            routeSection = trip[0].t.filter(a => a.timestamp + trip[0].d <= start + parseInt(slider.value))
+        }
+        route = trip.map(a => ({...a, text: a.p.split("_")[0], col: patternCache[a.p].color}))[0]
         customLayer._redraw()
     });
+
+    slider.addEventListener("change", function () {
+        info.querySelector("#line").innerHTML = route.text
+        info.querySelector("#line").style = "background-color: " + route.col + ";"
+        info.querySelector("#dest").innerHTML = patternCache[route.p].long_name //outOfService ? "Fora de serviço" : headsignCache[vehicles.find(a => a.id === point.id).tripId.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")] || "Carregando..."
+        info.querySelector("#vec").innerHTML = "# veículo: " + rg + "|" + id
+        info.querySelector("#stop").innerHTML = stops.find(a => a.id === routeSection.filter(a => a.stop)[routeSection.filter(a => a.stop).length - 1].stop).name || "Sem paragem"
+        info.querySelector("#lines").innerHTML = stops.find(a => a.id === routeSection.filter(a => a.stop)[routeSection.filter(a => a.stop).length - 1].stop).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
+        info.querySelector("#trip").innerHTML = route.trip
+    })
 }
+
+
 
 function parseTime(t) {
     h = Math.floor(t / 3600) % 24;

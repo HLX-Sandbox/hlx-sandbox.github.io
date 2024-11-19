@@ -119,7 +119,7 @@ const CustomCanvasLayer = L.Layer.extend({
                     info.querySelector("#dest").innerHTML = outOfService ? "Fora de serviço" : headsignCache[vehicles.find(a => a.id === point.id).tripId.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")] || "Carregando..."
                     info.querySelector("#vec").innerHTML = "# veículo: " + point.id
                     info.querySelector("#stop").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).name || "Sem paragem"
-                    info.querySelector("#lines").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).lines.filter(a => a.text !== point.text).reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
+                    info.querySelector("#lines").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
                     info.querySelector("#trip").innerHTML = vehicles.find(a => a.id === point.id).tripId
                     info.style.display = "block";
                     if ( socket.readyState === 3 ) {
