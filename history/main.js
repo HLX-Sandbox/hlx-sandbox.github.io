@@ -13,6 +13,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let { rg, id, extended } = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop) });
 
+let vehicleMeta;
+fetch(API_BASE + "vehicles").then(r => r.json()).then(r => vehicleMeta = r)
+
+
 let timeline = document.getElementById("timeline")
 
 let stops = [];
@@ -240,6 +244,7 @@ async function main() {
     info.querySelector("#line").style = "background-color: " + route.col + ";"
     info.querySelector("#dest").innerHTML = patternCache[route.p].long_name //outOfService ? "Fora de serviço" : headsignCache[vehicles.find(a => a.id === point.id).tripId.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")] || "Carregando..."
     info.querySelector("#vec").innerHTML = "# veículo: " + rg + "|" + id
+    info.querySelector("#vec2").innerHTML = "<strong>" + (vehicleMeta.find(a => a.id === rg + "|" + id) || {make: "NULL"}).make + "</strong> " + (vehicleMeta.find(a => a.id === rg + "|" + id) || {model: "NULL"}).model 
     info.querySelector("#stop").innerHTML = stops.find(a => a.id === route.t.filter(a => a.stop)[route.t.filter(a => a.stop).length - 1].stop).name || "Sem paragem"
     info.querySelector("#lines").innerHTML = stops.find(a => a.id === route.t.filter(a => a.stop)[route.t.filter(a => a.stop).length - 1].stop).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
     info.querySelector("#trip").innerHTML = route.trip
@@ -263,6 +268,7 @@ async function main() {
         info.querySelector("#line").style = "background-color: " + route.col + ";"
         info.querySelector("#dest").innerHTML = patternCache[route.p].long_name //outOfService ? "Fora de serviço" : headsignCache[vehicles.find(a => a.id === point.id).tripId.replaceAll("|", "_").split("_").slice(0, 3).join("_").replaceAll("C", "3")] || "Carregando..."
         info.querySelector("#vec").innerHTML = "# veículo: " + rg + "|" + id
+        info.querySelector("#vec2").innerHTML = "<strong>" + (vehicleMeta.find(a => a.id === rg + "|" + id) || {make: "NULL"}).make + "</strong> " + (vehicleMeta.find(a => a.id === rg + "|" + id) || {model: "NULL"}).model 
         info.querySelector("#stop").innerHTML = stops.find(a => a.id === routeSection.filter(a => a.stop)[routeSection.filter(a => a.stop).length - 1].stop).name || "Sem paragem"
         info.querySelector("#lines").innerHTML = stops.find(a => a.id === routeSection.filter(a => a.stop)[routeSection.filter(a => a.stop).length - 1].stop).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
         info.querySelector("#trip").innerHTML = route.trip
