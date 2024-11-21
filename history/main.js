@@ -150,7 +150,7 @@ customLayer = new CustomCanvasLayer().addTo(map);
 
 async function main() {
     trip = await fetch(CLOUDFLARED + "sandbox/vehicles/" + rg + "/" + id + "/trip").then(r => r.json());
-    fetch(CLOUDFLARED + "sandbox/trip-history/now/data").then(r => r.text()).then(async tripFull => {
+    fetch(CLOUDFLARED + "sandbox/trip-history/" + (new Date().toLocaleDateString("en-GB").replaceAll("/","")) + "/data").then(r => r.text()).then(async tripFull => {
         tripFull = tripFull.split("\n=").filter(a => a.endsWith("<ID:" + rg + "|" + id + ">"))[0]
         tripFull = tripFull.split("\n")
         tripFull = tripFull.slice(1, -1)
