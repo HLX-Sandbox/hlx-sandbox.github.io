@@ -233,7 +233,7 @@
                 if(sortType === "px") a.total_qty = Math.ceil((!service[a.line_id] || service[a.line_id].p === 0 ? 0 : (a.total_qty / service[a.line_id].p)) * 100) / 100
                 if(sortType === "pxd") a.total_qty = Math.ceil((!a.by_day || a.by_day.length === 0 ? 0 : (a.total_qty / a.by_day.length)) * 100) / 100
                 if(sortType === "pxt") a.total_qty = a.by_day.reduce((acc, b) => acc + b.qty, 0)
-                if(sortType === "vxd") a.total_qty = (service[a.line_id] || {t: 0}).t / (a.by_day.length || 1);
+                if(sortType === "vxd") a.total_qty = Math.ceil( (service[a.line_id] || {t: 0}).t / (a.by_day.length || 1)) * 100 / 100);
                 if(sortType === "vxt") a.total_qty = (service[a.line_id] || {t: 0}).t
                 if(isNaN(a.total_qty)) a.total_qty = -1
                 return a;
