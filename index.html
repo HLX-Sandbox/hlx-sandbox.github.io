@@ -72,6 +72,8 @@
                 <button id="px" class="selected">Px/Viagem</button>
                 <button id="pxt">Px totais</button>
                 <button id="pxd">Px diários</button>
+                <button id="vxt">Viagens totais</button>
+                <button id="vxd">Viagens diárias</button>
             </div>
         </div>
         <div class="line-usage-container" id="lines">
@@ -96,7 +98,7 @@
             regenGraph()
         }
 
-        let pxFilters = ["px","pxt","pxd"]
+        let pxFilters = ["px","pxt","pxd", "vxt", "vxd"]
 
         let sortType = "px";
 
@@ -231,6 +233,9 @@
                 if(sortType === "px") a.total_qty = Math.ceil((!service[a.line_id] || service[a.line_id].p === 0 ? 0 : (a.total_qty / service[a.line_id].p)) * 100) / 100
                 if(sortType === "pxd") a.total_qty = Math.ceil((!a.by_day || a.by_day.length === 0 ? 0 : (a.total_qty / a.by_day.length)) * 100) / 100
                 if(sortType === "pxt") a.total_qty = a.by_day.reduce((acc, b) => acc + b.qty, 0)
+                if(sortType === "vxd") a.total_qty = (service[a.line_id] || {t: 0}).t / (a.by_day.length || 1);
+                if(sortType === "vxt") a.total_qty = (service[a.line_id] || {t: 0}).t
+                if(isNaN(a.total_qty)) a.total_qty = -1
                 return a;
             }).sort((b, a) => {
                 return inverted ? b.total_qty - a.total_qty : a.total_qty - b.total_qty
@@ -245,7 +250,7 @@
                 let div = document.createElement("div")
                 div.onclick = () => window.location.href = "/stats/line/?l=" + line.line_id
                 div.className = "line-usage-el"
-                div.innerHTML = `<p class="upper"><span class="line" style="background-color: ${lineInfo.color};">${line.line_id.replaceAll("1998","CP")}</span><strong>${lineInfo.long_name}</strong></p><p class="lower"><strong>#${index + 1} | ${line.total_qty}</strong> passageiro${line.total_qty === 1 ? "" : "s"} ${sortType === "px" || !sortType ? "por viagem" : sortType === "pxd" ? "por dia" : "nos últimos 15 dias"}</p>`
+                div.innerHTML = `<p class="upper"><span class="line" style="background-color: ${lineInfo.color};">${line.line_id.replaceAll("1998","CP")}</span><strong>${lineInfo.long_name}</strong></p><p class="lower"><strong>#${index + 1} | ${line.total_qty}</strong> ${sortType.startsWith("p") ? "passageiro" + (line.total_qty === 1 ? "" : "s") : "viage" + (line.total_qty === 1 ? "m" : "ns")} ${sortType === "px" || !sortType ? "por viagem" : sortType.endsWith("xd") ? "por dia" : "nos últimos 15 dias"}</p>`
                 linesDiv.appendChild(div)
             })
         }
