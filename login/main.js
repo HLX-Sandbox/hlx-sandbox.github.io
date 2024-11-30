@@ -1,1 +1,1 @@
-window.location.href = "https://discord.com/oauth2/authorize?client_id=1312491837478670447&response_type=code&redirect_uri=https%3A%2F%2Fhlx-sandbox.github.io%2Fauth&scope=identify";
+window.location.href = "https://discord.com/oauth2/authorize?client_id=1312491837478670447&response_type=token&redirect_uri=https%3A%2F%2Fhlx-sandbox.github.io%2Fauth&scope=identify";
