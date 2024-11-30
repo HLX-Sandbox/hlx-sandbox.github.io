@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/constants.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoráriosLX - Sandbox</title>
+    <link rel="icon" href="/static/logo1.svg" sizes="256x256">
+    <link href="/style.css" rel="stylesheet">
+    <meta property="og:title" content="HoráriosLX - Sandbox" />
+    <meta property="og:description" content="Estatísticas e outras coisas para os nerds dos transportes :P" />
+    <meta property="og:image" content="https://hlx-sandbox.github.io/static/logo1.png" />
+    <meta property="og:url" content="https://hlx-sandbox.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0047AB">
+    <meta property="og:locale" content="pt_PT" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <header>
+        <img src="/static/logo1.svg"></img>
+        <h1><a href="/">HoráriosLX - Sandbox</a></h1>
+        <div class="buttons">
+            <a id="login" href="/login">Login</a>
+        </div>
+    </header>
+    <div class="search">
+        <input id="search" placeholder="Selecione uma paragem/escola" autocomplete="off">
+        <div class="autocomplete hidden" id="autocomplete"></div>
+    </div>
+    <div class="addons" style="z-index: 1000;">
+      <div id="stop-info">
+        <p class="title"><strong>Paragem</strong></p>
+        <p id="stop">Algés - Bº do Zambujal</p>
+        <p id="lines"><span>1000</span></p>
+        <p id="id">#000000</p>
+        <div id="suggestions">
+            <div class="suggestion">
+                <p>Algés - Zambujal</p>
+                <span><button id="upvote">👍</button> 0 | Sugerido por Movies22</span>
+            </div>
+            <div class="suggestion">
+                <p>Algés - Zambujal</p>
+                <span><button id="upvote">👍</button> 0 | Sugerido por Movies22</span>
+            </div>
+            <button id="add">Sugerir nome</button>
+        </div>
+        <button id="close">X</button>
+      </div>
+      </div>
+    <div id="map" style="z-index: 0;"></div>
+    <script src="./main.js"></script>
+    <script src="./search.js"></script>
+</body>
+
+</html>

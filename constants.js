@@ -1,6 +1,6 @@
-let CLOUDFLARED = "https://planned-worm-politics-obviously.trycloudflare.com/"
+let CLOUDFLARED = "https://revealed-docs-obtaining-permitted.trycloudflare.com/"
 
-let CLOUDFLARED2 = "https://possible-just-contractor-corpus.trycloudflare.com/";
+let CLOUDFLARED2 = "https://completion-surface-authentication-rather.trycloudflare.com/";
 
 const API_BASE = "https://api.cmet.pt/";
 
