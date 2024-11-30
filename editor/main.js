@@ -213,7 +213,7 @@ function loadInfo(point) {
                     r.forEach(s => {
                         t = t + `<div class="suggestion" id="${point.id}-${s.si}">
                 <p>${s.name}</p>
-                <span><button id="upvote" onclick="upvote('${point.id}-${s.si}')" ${s.c2 && s.c2.includes(userinfo.id) ? "class=\"disabled\"" : ""}>👍</button> ${s.c} | Sugerido por ${s.user}</span>
+                <span><button id="upvote" onclick="upvote('${point.id}-${s.si}')" ${s.c2 && s.c2.includes(userinfo ? userinfo.id : "") ? "class=\"disabled\"" : ""}>👍</button> ${s.c} | Sugerido por ${s.user}</span>
             </div>`
                     })
                     t = t + `<button id="add" onclick="suggest('${point.id}')" ${!userinfo ? "class=\"disabled\"" : ""}>Sugerir nome</button>`;
