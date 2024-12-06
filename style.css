@@ -240,6 +240,26 @@ input:focus {
     box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+table, th, td {
+    border:1px solid black;
+  }
+
+.table {
+    display: block !important;
+    width: calc(100% - 1em) !important;
+    padding: .5em;
+}
+
+.table .primary {
+    position: sticky;
+    background-color: #cfcfcf;
+    top: 0;
+}
+
+.table table {
+    width: 100%;
+}
+
 .autocomplete.hidden {
     opacity: 0;
 }

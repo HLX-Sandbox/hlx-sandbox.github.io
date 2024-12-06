@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/constants.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoráriosLX - Sandbox</title>
+    <link rel="icon" href="/static/logo1.svg" sizes="256x256">
+    <link href="/style.css" rel="stylesheet">
+    <meta property="og:title" content="HoráriosLX - Sandbox" />
+    <meta property="og:description" content="Estatísticas e outras coisas para os nerds dos transportes :P" />
+    <meta property="og:image" content="https://hlx-sandbox.github.io/static/logo1.png" />
+    <meta property="og:url" content="https://hlx-sandbox.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0047AB">
+    <meta property="og:locale" content="pt_PT" />
+</head>
+
+<body>
+    <header>
+        <img src="/static/logo1.svg"></img>
+        <h1><a href="/">HoráriosLX - Sandbox</a></h1>
+        <div class="buttons">
+            <a href="/vehicles/">Histórico de viagens</a>
+            <span class="split">|</span>
+            <a href="/">Brevemente...</a>
+        </div>
+    </header>
+    <div class="h-spacer"></div>
+    <section class="line-usage">
+        <h2>Veículos da Carris Metropolitana</h2>
+        <div class="line-usage-container table" id="table">
+            Loading...
+        </div>
+    </section>
+    <div class="h-spacer"></div>
+    <footer>
+        <a href="https://horarios-lx.github.io/contactos/">Contactos</a>
+        <span class="split">|</span><a href="https://github.com/Horarios-LX/horarios-lx.github.io">Repositório</a>
+    </footer>
+    <script>
+        let table = document.createElement("table")
+        let div = document.getElementById("table")
+        let tr = document.createElement("tr")
+        tr.classList.add("primary")
+        tr.innerHTML = "<th>Veículo</th><th>Zona</th><th>Operador</th><th>Modelo</th><th>Matrícula</th><th>Data de registo</th>"
+        table.appendChild(tr)
+        /*
+        <table>
+                <tr>
+                  <th>Company</th>
+                  <th>Contact</th>
+                  <th>Country</th>
+                </tr>
+                <tr>
+                  <td>Alfreds Futterkiste</td>
+                  <td>Maria Anders</td>
+                  <td>Germany</td>
+                </tr>
+                <tr>
+                  <td>Centro comercial Moctezuma</td>
+                  <td>Francisco Chang</td>
+                  <td>Mexico</td>
+                </tr>
+              </table>
+        */
+        fetch(API_BASE + "vehicles").then(r => r.json()).then(r => r.forEach(bus => {
+            tr = document.createElement("tr")
+            tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td>`
+            table.appendChild(tr)
+        }) ).then(() => div.innerHTML = table.outerHTML);
+    </script>
+</body>
+
+</html>
