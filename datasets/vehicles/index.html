@@ -30,6 +30,25 @@
     <div class="h-spacer"></div>
     <section class="line-usage">
         <h2>Veículos da Carris Metropolitana</h2>
+        <div class="opts">
+            <div class="opts">
+                <div class="lineTypes">
+                    <button id="vimeca" class="selected">Vimeca</button>
+                    <button id="scotturb" class="selected">Scotturb</button>
+                    <button id="va" class="selected">VA</button>
+                    <button id="rl" class="selected">RL</button>
+                    <button id="barraqueiro" class="selected">Barraqueiro</button>
+                    <button id="jj" class="selected">JJ S. António</button>
+                    <button id="tst" class="selected">TST</button>
+                </div>
+                <div class="type">
+                    <button id="z1" class="selected">Zona 1</button>
+                    <button id="z2" class="selected">Zona 2</button>
+                    <button id="z3" class="selected">Zona 3</button>
+                    <button id="z4" class="selected">Zona 4</button>
+                </div>
+            </div>
+        </div>
         <div class="line-usage-container table" id="table">
             Loading...
         </div>
@@ -46,6 +65,48 @@
         tr.classList.add("primary")
         tr.innerHTML = "<th>Veículo</th><th>Zona</th><th>Operador</th><th>Modelo</th><th>Matrícula</th><th>Data de registo</th>"
         table.appendChild(tr)
+        let opts = document.querySelector(".opts")
+
+        let types = ["vimeca", "scotturb", "va", "rl", "barraqueiro", "jj", "tst"]
+        let typeToggle = {}
+        types.map(a => typeToggle[a] = true)
+        types.forEach(p => {
+            opts.querySelector(".lineTypes #" + p).onclick = () => {
+                if (Object.values(typeToggle).filter(a => a).length === 7) {
+                    Object.keys(typeToggle).forEach(a => {
+                        typeToggle[a] = false;
+                        opts.querySelector(".lineTypes #" + a).classList.remove("selected")
+                    })
+                }
+                opts.querySelector(".lineTypes #" + p).classList.toggle("selected")
+                typeToggle[p] = opts.querySelector(".lineTypes #" + p).classList.contains("selected")
+                if (!Object.values(typeToggle).some(a => a)) Object.keys(typeToggle).forEach(a => {
+                    typeToggle[a] = true;
+                    opts.querySelector(".lineTypes #" + a).classList.add("selected")
+                })
+                regenGraph()
+            }
+        })
+
+        let zones = ["z1", "z2", "z3", "z4"]
+        let zonesToggle = { z1: true, z2: true, z3: true, z4: true }
+        zones.forEach(p => {
+            opts.querySelector(".type #" + p).onclick = () => {
+                if (Object.values(zonesToggle).filter(a => a).length === 4) {
+                    Object.keys(zonesToggle).forEach(a => {
+                        zonesToggle[a] = false;
+                        opts.querySelector(".type #" + a).classList.remove("selected")
+                    })
+                }
+                opts.querySelector(".type #" + p).classList.toggle("selected")
+                zonesToggle[p] = opts.querySelector(".type #" + p).classList.contains("selected")
+                if (!Object.values(zonesToggle).some(a => a)) Object.keys(zonesToggle).forEach(a => {
+                    zonesToggle[a] = true;
+                    opts.querySelector(".type #" + a).classList.add("selected")
+                })
+                regenGraph()
+            }
+        })
         /*
         <table>
                 <tr>
@@ -65,11 +126,32 @@
                 </tr>
               </table>
         */
-        fetch(API_BASE + "vehicles").then(r => r.json()).then(r => r.forEach(bus => {
-            tr = document.createElement("tr")
-            tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td>`
-            table.appendChild(tr)
-        }) ).then(() => div.innerHTML = table.outerHTML);
+        let vehicles;
+        fetch(API_BASE + "vehicles").then(r => r.json()).then(r => {
+            vehicles = r;
+            regenGraph();
+        }).then(() => div.innerHTML = table.outerHTML);
+
+        regenGraph = () => {
+            table.innerHTML = "<tr class=\"primary\"><th>Veículo</th><th>Zona</th><th>Operador</th><th>Modelo</th><th>Matrícula</th><th>Data de registo</th></tr>";
+            console.log(typeToggle)
+            vehicles.forEach(bus => {
+                if(bus.id.split("|")[1] === "UNAVAILABLE_VEHICLE_ID") return;
+                if(!zonesToggle["z" + bus.id[1]]) return;
+                if(!(Object.values(typeToggle).filter(a => a).length === 7) && !bus.owner) return;
+                if(!typeToggle.vimeca && bus.owner === "VIMECA") return;
+                if(!typeToggle.scotturb && bus.owner === "SCOTTURB") return;
+                if(!typeToggle.va && bus.owner === "ALVORADA") return;
+                if(!typeToggle.rl && bus.owner === "RL") return;
+                if(!typeToggle.barraqueiro && bus.owner.toLowerCase().includes("barraqueiro")) return;
+                if(!typeToggle.jj && bus.owner.toLowerCase().includes("jj")) return;
+                if(!typeToggle.tst && bus.owner === "TST") return;
+                tr = document.createElement("tr")
+                tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td>`
+                table.appendChild(tr)
+            })
+            div.innerHTML = table.outerHTML
+        }
     </script>
 </body>
 
