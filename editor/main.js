@@ -245,7 +245,7 @@ document.body.onload = async () => {
     if(stops2.then) stops2 = await Promise.resolve(stops2);
     Object.values(stops).forEach(stop => {
         s2 = stops2[stop.id]
-        customLayer.addMarker(stop.lat, stop.lon, stop.id, stop.name, (s2 || []).length)
+        if(s2) customLayer.addMarker(stop.lat, stop.lon, stop.id, stop.name, (s2 || []).length)
     })
     customLayer._redraw();
 }
