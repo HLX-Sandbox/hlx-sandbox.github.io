@@ -240,10 +240,14 @@ input:focus {
     box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-table, th, td {
+.table, th, td {
     border:1px solid black;
     text-align: center;
   }
+
+.table, th, td .line {
+    z-index: inherit !important;
+}
 
 .table {
     display: block !important;
@@ -253,6 +257,7 @@ table, th, td {
 
 .table .primary {
     position: sticky;
+    z-index: 1000000;
     background-color: #cfcfcf;
     top: 0;
 }
