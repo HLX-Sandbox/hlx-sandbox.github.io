@@ -1,6 +1,6 @@
-let CLOUDFLARED = "https://pst-guitar-influences-compatibility.trycloudflare.com/"
+let CLOUDFLARED = "https://henry-wrestling-belly-ownership.trycloudflare.com/"
 
-let CLOUDFLARED2 = "https://stats-phenomenon-tuition-phases.trycloudflare.com/";
+let CLOUDFLARED2 = "https://travelling-cowboy-contest-racks.trycloudflare.com/";
 
 const API_BASE = "https://api.cmet.pt/";
 
