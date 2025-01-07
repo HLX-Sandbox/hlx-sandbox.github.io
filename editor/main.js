@@ -236,7 +236,7 @@ document.body.onload = async () => {
             authorization: `${auth}`,
         },
     }).then(r => r.json()).then(r => {
-        if(r.message) return;
+        if(r.message) return alert("Por favor inicie sessão para usar o editor");
         userinfo = r;
         user.setAttribute("href", "/logout")
         user.innerHTML = `<img src="https://cdn.discordapp.com/avatars/${r.id}/${r.avatar}.png" style="border: 0px; margin: 0px; vertical-align: center; border-radius: 50%; float: left; height: 1em"> ${r.global_name}`;
@@ -245,7 +245,7 @@ document.body.onload = async () => {
     if(stops2.then) stops2 = await Promise.resolve(stops2);
     Object.values(stops).forEach(stop => {
         s2 = stops2[stop.id]
-        if(s2) customLayer.addMarker(stop.lat, stop.lon, stop.id, stop.name, (s2 || []).length)
+        customLayer.addMarker(stop.lat, stop.lon, stop.id, stop.name, (s2 || []).length)
     })
     customLayer._redraw();
 }
