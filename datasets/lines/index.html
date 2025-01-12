@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/constants.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoráriosLX - Sandbox</title>
+    <link rel="icon" href="/static/logo1.svg" sizes="256x256">
+    <link href="/style.css" rel="stylesheet">
+    <meta property="og:title" content="HoráriosLX - Sandbox" />
+    <meta property="og:description" content="Estatísticas e outras coisas para os nerds dos transportes :P" />
+    <meta property="og:image" content="https://hlx-sandbox.github.io/static/logo1.png" />
+    <meta property="og:url" content="https://hlx-sandbox.github.io/" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0047AB">
+    <meta property="og:locale" content="pt_PT" />
+</head>
+
+<body>
+    <header>
+        <img src="/static/logo1.svg"></img>
+        <h1><a href="/">HoráriosLX - Sandbox</a></h1>
+        <div class="buttons">
+            <a href="/vehicles/">Histórico de viagens</a>
+            <span class="split">|</span>
+            <a href="/">Brevemente...</a>
+        </div>
+    </header>
+    <div class="h-spacer"></div>
+    <section class="line-usage">
+        <h2>Veículos da Carris Metropolitana</h2>
+        <div class="opts">
+            <div class="opts">
+                <div class="lineTypes">
+                    <button id="vimeca" class="selected">Vimeca</button>
+                    <button id="scotturb" class="selected">Scotturb</button>
+                    <button id="va" class="selected">VA</button>
+                    <button id="rl" class="selected">RL</button>
+                    <button id="barraqueiro" class="selected">Barraqueiro</button>
+                    <button id="jj" class="selected">JJ S. António</button>
+                    <button id="tst" class="selected">TST</button>
+                </div>
+                <div class="type">
+                    <button id="z1" class="selected">Zona 1</button>
+                    <button id="z2" class="selected">Zona 2</button>
+                    <button id="z3" class="selected">Zona 3</button>
+                    <button id="z4" class="selected">Zona 4</button>
+                </div>
+            </div>
+        </div>
+        <div class="line-usage-container table" id="table">
+            Loading...
+        </div>
+    </section>
+    <div class="h-spacer"></div>
+    <footer>
+        <a href="https://horarios-lx.github.io/contactos/">Contactos</a>
+        <span class="split">|</span><a href="https://github.com/Horarios-LX/horarios-lx.github.io">Repositório</a>
+    </footer>
+    <script>
+        let table = document.createElement("table")
+        let div = document.getElementById("table")
+        let tr = document.createElement("tr")
+        tr.classList.add("primary")
+        tr.innerHTML = "<th>Shift ID</th><th>Zona</th><th>Line ID</th><th>Line Dest</th>"
+        table.appendChild(tr)
+        let opts = document.querySelector(".opts")
+        
+        let vehicles;
+        let lines;
+        let mum;
+        fetch(API_BASE + "vehicles").then(r => r.json()).then(r => {
+            lines = fetch("https://api.carrismetropolitana.pt/lines").then(r => r.json());
+            mun = fetch("https://api.carrismetropolitana.pt/municipalities").then(r => r.json())
+            vehicles = r;
+            regenGraph();
+        }).then(() => div.innerHTML = table.outerHTML);
+
+        regenGraph = async () => {
+            tr.innerHTML = "<th>Shift ID</th><th>Zona</th><th>Line ID</th><th>Line Dest</th><th>Mun</th><th>Loc</th>"
+            if(lines.then) lines = await Promise.resolve(lines);
+            if(mun.then) mun = await Promise.resolve(mun)
+            vehicles = vehicles.filter(a => a.line_id && a.shift_id && a.line_id.startsWith("1")).sort((a, b) => {
+                return a.shift_id.localeCompare(b.shift_id)
+            })
+            vehicles.forEach(bus => {
+                if(bus.id.split("|")[1] === "UNAVAILABLE_VEHICLE_ID") return;
+                tr = document.createElement("tr")
+                status = "N/A"
+                //if(bus.timestamp < (Date.now()/1000 - 24*60*60)) //bus.line_id = undefined;
+                if(bus.line_id === "1998") bus.line_id = "CP"
+                console.log(lines.find(a => a.id === bus.line_id))
+                console.log(bus.line_id)
+                if(bus.line_id) status = `<span class="line" style="background-color: ${lines.find(a => a.id === bus.line_id).color}">${bus.line_id}</span>`;
+                tr.innerHTML = `<td>${bus.shift_id}</td><td>${bus.id[1]}</td><td>${status}</td><td>${(lines.find(a => a.id === bus.line_id) || { long_name: "ERROR"}).long_name}</td><td>${(lines.find(a => a.id === bus.line_id) || { municipalities: []}).municipalities.map(a => (mun.find(b => b.id === a) || { name: "ERR" }).name)}</td><td>${(lines.find(a => a.id === bus.line_id) || { localities: "ERROR"}).localities.join(", ")}</td>`
+                table.appendChild(tr)
+            })
+            div.innerHTML = table.outerHTML
+        }
+    </script>
+</body>
+
+</html>
