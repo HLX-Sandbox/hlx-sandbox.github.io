@@ -14,17 +14,17 @@ info.style.display = "none";
 
 let selMarker;
 
-let socket = new WebSocket(CLOUDFLARED2); 
+//let socket = new WebSocket(CLOUDFLARED2); 
 
 let vehicleMeta;
 fetch(API_BASE + "vehicles").then(r => r.json()).then(r => vehicleMeta = r)
 
-function onopen() { 
+/*function onopen() { 
     socket.send("ping")
     setInterval(() => {
         socket.send("ping")
     }, 30*1000)     
-}; 
+};*/ 
 
 function onmessage(msg) {
     if(msg.data !== "OK") {
@@ -43,7 +43,7 @@ function onmessage(msg) {
     }
 }
 
-socket.onopen = onopen;
+//socket.onopen = onopen;
 
 let headsignCache = {};
 
@@ -103,8 +103,9 @@ const CustomCanvasLayer = L.Layer.extend({
                     outOfService = true;
                 }
                 fetch(CLOUDFLARED + "sandbox/vehicles/" + point.id.split("|")[0] + "/" + point.id.split("|")[1] + "/trip").then(r => r.json()).then(async s => {
-                    if(!s.nodes) return this._redraw()
-                    s.nodes[0] = "0|" + s.nodes[0]
+                    //if(!s.nodes) return this._redraw()
+                    //s.nodes[0] = "0|" + s.nodes[0]
+                    s = { nodes: ["0|0|0"], pos: [ point.lat - 38.7169, (point.lon + 9.1395) ] }
                     positionCache[point.id] = s.nodes.map(a => a.split("|").slice(1, 3)).map(b => {
                         b[0] = parseFloat(b[0]) + parseFloat(s.pos[0])+38.7169
                         b[1] = parseFloat(b[1]) + parseFloat(s.pos[1])-9.1395
@@ -126,7 +127,7 @@ const CustomCanvasLayer = L.Layer.extend({
                     info.querySelector("#lines").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
                     info.querySelector("#trip").innerHTML = vehicles.find(a => a.id === point.id).tripId
                     info.style.display = "block";
-                    if ( socket.readyState === 3 ) {
+                    /*if ( socket.readyState === 3 ) {
                         socket.close();
                         socket = new WebSocket(CLOUDFLARED2);
                 
@@ -137,7 +138,7 @@ const CustomCanvasLayer = L.Layer.extend({
                         socket.onopen = onopen;
                         socket.onmessage = onmessage;
                     }
-                    socket.send(JSON.stringify({op: "20", d: point.id}))
+                    socket.send(JSON.stringify({op: "20", d: point.id}))*/
                     map.flyTo([point.lat, point.lon], 17, {
                         animate: true,
                         duration: 1.0
@@ -288,7 +289,7 @@ const CustomCanvasLayer = L.Layer.extend({
     },
 });
 
-socket.onmessage = onmessage;
+//socket.onmessage = onmessage;
 
 map = L.map("map", {
     renderer: L.canvas(),
@@ -309,7 +310,7 @@ info.querySelector("#close").onclick = () => {
     info.style.display = "none";
     selMarker = null;
     customLayer._redraw()
-    socket.send(JSON.stringify({op: "20", d: undefined}))
+    //socket.send(JSON.stringify({op: "20", d: undefined}))
 }
 
 let i = 0;
