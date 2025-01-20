@@ -1,4 +1,4 @@
-let CLOUDFLARED = "https://chips-asin-effectiveness-mirrors.trycloudflare.com/"
+let CLOUDFLARED = "https://except-meet-institute-talented.trycloudflare.com/"
 
 let CLOUDFLARED2 = "https://health-tracking-introduced-mandatory.trycloudflare.com/";
 

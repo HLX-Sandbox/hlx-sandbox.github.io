@@ -102,13 +102,14 @@ const CustomCanvasLayer = L.Layer.extend({
                     point.col = "#000000"
                     outOfService = true;
                 }
-                fetch(CLOUDFLARED + "sandbox/vehicles/" + point.id.split("|")[0] + "/" + point.id.split("|")[1] + "/trip").then(r => r.json()).then(async s => {
-                    //if(!s.nodes) return this._redraw()
+                fetch(CLOUDFLARED + "t/shift/" + point.rg + "-" + point.shift + "/current").then(r => r.json()).then(async s => {
+                    if(!s) return this._redraw();
+                    s.data.pos = s.data.pos.slice(0, -1);
                     //s.nodes[0] = "0|" + s.nodes[0]
-                    s = { nodes: ["0|0|0"], pos: [ point.lat - 38.7169, (point.lon + 9.1395) ] }
-                    positionCache[point.id] = s.nodes.map(a => a.split("|").slice(1, 3)).map(b => {
-                        b[0] = parseFloat(b[0]) + parseFloat(s.pos[0])+38.7169
-                        b[1] = parseFloat(b[1]) + parseFloat(s.pos[1])-9.1395
+                    s = { nodes: s.data.pos.split("@") }
+                    positionCache[point.id] = s.nodes.map(a => a.split("|").slice(0, 2)).map(b => {
+                        b[0] = parseFloat(b[0])
+                        b[1] = parseFloat(b[1])
                         return b;
                     });
                     console.log("ADDED " + s.nodes.length + " entries to " + point.id)
@@ -127,18 +128,7 @@ const CustomCanvasLayer = L.Layer.extend({
                     info.querySelector("#lines").innerHTML = stops.find(a => a.id === vehicles.find(a => a.id === point.id).stopId).lines.reduce((acc, val) => acc + "<span class=\"line\" style=\"background-color: " + (val.color || "#000000") + ";\">" + val.text + "</span>", "")
                     info.querySelector("#trip").innerHTML = vehicles.find(a => a.id === point.id).tripId
                     info.style.display = "block";
-                    /*if ( socket.readyState === 3 ) {
-                        socket.close();
-                        socket = new WebSocket(CLOUDFLARED2);
-                
-                        // wait until new connection is open
-                        while (socket.readyState !== 1) {
-                          await new Promise(r => setTimeout(r, 250));
-                        }
-                        socket.onopen = onopen;
-                        socket.onmessage = onmessage;
-                    }
-                    socket.send(JSON.stringify({op: "20", d: point.id}))*/
+                    
                     map.flyTo([point.lat, point.lon], 17, {
                         animate: true,
                         duration: 1.0
@@ -156,16 +146,18 @@ const CustomCanvasLayer = L.Layer.extend({
         map.off('move', this._update, this);
     },
 
-    addMarker: function (lat, lon, id, text, col) {
+    addMarker: function (lat, lon, id, text, col, shift, rg) {
         if (this._data.find(a => a.id === id)) {
             this._data.find(a => a.id === id).lat = lat
             this._data.find(a => a.id === id).lon = lon
             this._data.find(a => a.id === id).text = text
             this._data.find(a => a.id === id).col = col
+            this._data.find(a => a.id === id).shift = shift
+            this._data.find(a => a.id === id).rg = rg
             return;
         }
-        this._data.push({ lat, lon, id, text, col });
-        return { lat, lon, id, text, col }
+        this._data.push({ lat, lon, id, text, col, shift, rg });
+        return { lat, lon, id, text, col, shift, rg }
     },
 
     removeMarker: function (id) {
@@ -321,6 +313,7 @@ setInterval(() => {
 }, 30000)
 
 info.querySelector("#view").onclick = () => selMarker ? window.location.href = "/history/?rg=" + selMarker.split("|")[0] + "&id=" + selMarker.split("|")[1] : alert("selMarker is undefined")
+info.querySelector("#vehicle").onclick = () => selMarker ? window.location.href = "/vehicle/?rg=" + selMarker.split("|")[0] + "&id=" + selMarker.split("|")[1] : alert("selMarker is undefined")
 
 function fetchVehicles() {
     fetch(CLOUDFLARED + "vehicles").then(r => r.json()).then(v => {
@@ -339,7 +332,7 @@ function fetchVehicles() {
             if (vec.lineId === "1998") {
                 vec.lineId = "CP";
             }
-            marker = customLayer.addMarker(vec.lat, vec.lon, vec.id, (vec.tripId ? vec.lineId : vec.id), (vec.tripId ? vec.color : "#000000"));
+            marker = customLayer.addMarker(vec.lat, vec.lon, vec.id, (vec.tripId ? vec.lineId : vec.id), (vec.tripId ? vec.color : "#000000"), vec.shiftId, vec.a);
             markersCache[vec.id] = marker;
         })
         stats.querySelector("#Z1").innerHTML = "<b>" + v.filter(a => a.tripId && a.tripId.startsWith("1")).length + "</b> - Zona 1"

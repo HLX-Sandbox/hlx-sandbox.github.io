@@ -226,19 +226,59 @@ input:focus {
 
 .autocomplete {
     position: absolute;
-    top: 0em;
-    width: 20em;
-    margin-left: 1em;
-    max-height: 18em;
+    top: calc(100% + 0.5em);
+    width: calc(70% + 1em);
+    margin-left: calc(15% - .5em);
+    max-height: 15em;
+    overflow-y: auto;
     background-color: white;
     border-radius: .5em;
     z-index: 999;
     scrollbar-width: none;
-    overflow-y: auto;
-    transform: translate(0, -100%);
     font-size: 1em;
     box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.autocomplete.hidden {
+    opacity: 0;
+}
+
+.autocomplete div {
+    padding: 10px;
+    padding-left: 20px;
+    height: 1.8em;
+    vertical-align: middle;
+    text-align: left;
+    text-wrap: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.autocomplete div .lines {
+    height: 2em;
+    padding-top: .1em;
+    border-radius: 0px;
+    padding: 0px;
+    font-size: .5em;
+}
+
+.autocomplete div .lines .loc {
+    font-size: 1.5em !important;
+    font-weight: normal;
+}
+
+.autocomplete div.a {
+    background-color: #cfcfcf;
+    cursor: pointer;
+}
+
+.autocomplete div:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
 
 .table, th, td {
     border:1px solid black;
@@ -266,23 +306,7 @@ input:focus {
     width: 100%;
 }
 
-.autocomplete.hidden {
-    opacity: 0;
-}
 
-.autocomplete div:not(.lines) {
-    padding: 10px;
-    background-color: white;
-    padding-left: 20px;
-    height: 1.8em;
-    vertical-align: middle;
-    text-align: left;
-    text-wrap: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
-}
 
 .buttonsRow {
     width: 100%;
@@ -309,28 +333,7 @@ input:focus {
     cursor: no-drop;
 }
 
-.autocomplete div .lines {
-    height: 2em;
-    padding-top: .1em;
-    border-radius: 0px;
-    padding: 0px;
-    font-size: .5em;
-}
 
-.autocomplete div .lines .loc {
-    font-size: 1.5em !important;
-    font-weight: normal;
-}
-
-.autocomplete div.a {
-    background-color: #cfcfcf;
-    cursor: pointer;
-}
-
-.autocomplete div:hover {
-    background-color: var(--accent);
-    color: white;
-}
 
 h1,
 h2,
@@ -1378,7 +1381,7 @@ section {
     filter: brightness(.85);
 }
 
-#info #view, #suggestions #add {
+#info #view, #info #vehicle, #suggestions #add {
     background-color: var(--accent);
     color: white;
     border-width: 0px;
@@ -1420,9 +1423,9 @@ section {
     position: absolute;
     width: 100%;
     background: rgba(255,255,255, 0.8);
-    height: 6em;
+    height: 9em;
     padding-top: 1em;
-    background: linear-gradient(0deg, rgba(255,255,255,0.8) 80%, rgba(255,255,255,0) 100%);
+    background: rgba(255,255,255,0.8);
     bottom: 0px;
     z-index: 100000;
     text-align: center;
@@ -1440,7 +1443,8 @@ section {
     padding: .25em;
 }
 
-#timeline #services {
+#timeline #services, #timeline #shifts {
+    margin-bottom: .5em;
     height: 2em;
     width: calc(100% - 2em);
     margin-left: 1em;
@@ -1448,7 +1452,7 @@ section {
     display: flex;
 }
 
-#timeline #services div {
+#timeline #services div, #timeline #shifts div {
     height: 2em;
     position: relative;
     text-align: center;
@@ -1463,7 +1467,7 @@ section {
     margin: 0px !important;
 }
 
-#timeline #services div::before {
+#timeline #services div::before, #timeline #shifts div::before {
     content: " ";
     background-color: black;
     position: absolute;

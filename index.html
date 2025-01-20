@@ -24,7 +24,7 @@
         <div class="buttons">
             <a href="/vehicles/">Histórico de viagens</a>
             <span class="split">|</span>
-            <a href="/">Brevemente...</a>
+            <a href="/editor">Mapa comunitário</a>
         </div>
     </header>
     <div class="h-spacer"></div>
@@ -40,7 +40,7 @@
             <section class="div-split">
                 <h2>Pesquisar</h2>
                 <div class="searchContainer" style="position: relative;">
-                    <input id="search" placeholder="Trip ID/Linha/Nº do autocarro" autocomplete="off">
+                    <input id="search" placeholder="Trip ID ou Shift/Nº do autocarro" autocomplete="off">
                     <div class="autocomplete hidden" id="autocomplete"></div>
                 </div>
                 <div class="buttonsRow">
@@ -187,8 +187,8 @@
             lines = await fetch(API_BASE2 + "lines").then(r => r.json())
 
             service = {};
-            Object.values((await fetch(API_BASE2 + "metrics/service/all").then(r => r.json())).reduce((acc, item) => {
-                if(parseTime(item.operational_day)[0] < minDate[0] || parseTime(item.operational_day)[1] < minDate[1] || parseTime(item.operational_day)[2] < minDate[2]) return acc;
+            Object.values((await fetch(API_BASE2 + "metrics/service/all").then(r => r.json())).data.reduce((acc, item) => {
+                if(parseTime(item.operational_date)[0] < minDate[0] || parseTime(item.operational_date)[1] < minDate[1] || parseTime(item.operational_date)[2] < minDate[2]) return acc;
                 if(!acc[item.line_id]) acc[item.line_id] = [];
                 acc[item.line_id].push(item)
                 return acc;
@@ -255,6 +255,7 @@
             })
         }
     </script>
+    <script src="/search.js"></script>
 </body>
 
 </html>

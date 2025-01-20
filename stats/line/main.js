@@ -3,6 +3,19 @@ let lineInfo;
 let vehicles;
 let cmetVehicles;
 
+function getDateInUTC4() {
+    let n = new Date();
+    
+    const utcMillis = n.getTime() + n.getTimezoneOffset() * 60000;
+    
+    const utcMinus4 = new Date(utcMillis - 4 * 60 * 60000);
+    const day = String(utcMinus4.getDate()).padStart(2, "0");
+    const month = String(utcMinus4.getMonth() + 1).padStart(2, "0");
+    const year = utcMinus4.getFullYear();
+
+    return `${day}${month}${year}`;
+}
+
 document.body.onload = async () => {
     let line = window.location.href.split("?l=")[1]
     metrics = await fetch(API_BASE2 + "metrics/demand/by_line").then(r => r.json()).then(r => r.filter(a => a.line_id === line)[0]);
@@ -26,11 +39,10 @@ document.body.onload = async () => {
         let tooltip = document.getElementById("stats-hover")
         drawGraph(hm, svg, tooltip)
 
-        let trips = await fetch(CLOUDFLARED + "sandbox/trip-history/" + (new Date(Date.now())).toLocaleDateString().replaceAll("/", "") + "/trips").then(r => r.text())
-        trips = trips.split("\n")
-        trips = trips.map(a => a.split("@"))
+        let trips = (await fetch(CLOUDFLARED + "t/tripIds/" + getDateInUTC4()).then(r => r.text())).split("\n")
+        let shifts = (await fetch(CLOUDFLARED + "t/vehicles/" + getDateInUTC4()).then(r => r.text())).split("\n").map(a => a.split(">"))
+        trips = trips.map(a => [shifts.find(b => b[1] === a.split(">")[1])[0], a.split(">")[0]])
         trips = trips.filter(a => a[1] && a[1].startsWith(line)).reverse()
-
         let patternsCache = {}
         
         await Promise.all(trips.map(async trip => {
