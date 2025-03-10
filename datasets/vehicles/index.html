@@ -131,7 +131,7 @@
                 if(!typeToggle.tst && bus.owner === "TST") return;
                 tr = document.createElement("tr")
                 status = "N/A"
-                //if(bus.timestamp < (Date.now()/1000 - 24*60*60)) //bus.line_id = undefined;
+                if(bus.timestamp < (Date.now()/1000 - 24*60*60)) bus.line_id = undefined;
                 if(bus.line_id) status = `<span class="line" style="background-color: ${lines.find(a => a.id === bus.line_id).color}">${bus.line_id}</span>`;
                 tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td><td>${status}</td><td>${bus.block_id || "N/A"}</td><td>${checkDepot(bus.block_id)}</td>`
                 table.appendChild(tr)
@@ -144,9 +144,9 @@
                 let r = "Desconhecido"
                 switch(d[0]) {
                     case "1":
-                        if(d[1][1] === "0" || d[1][1] === "1" || d[1][1] === "2" || d[1][1] === "4" || d[1][1] === "5" || d[1][1] === "6" || d[1][1] === "7" || d[1][1] === "9") {
+                        if(d[1][1] === "0" || d[1][1] === "1" || d[1][1] === "2" || d[1][1] === "4" || d[1][1] === "5" || d[1][1] === "6"|| d[1][1] === "9") {
                             r = "A1 - Q. Baixo"
-                        } else if(d[1][1] === "3" || d[1][1] === "7") {
+                        } else if(d[1][1] === "3" || d[1][1] === "7" || d[1][1] === "8") {
                             r = "A1 - Adroana"
                         }
                         break;
