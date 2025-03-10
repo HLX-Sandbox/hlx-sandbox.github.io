@@ -107,25 +107,6 @@
                 regenGraph()
             }
         })
-        /*
-        <table>
-                <tr>
-                  <th>Company</th>
-                  <th>Contact</th>
-                  <th>Country</th>
-                </tr>
-                <tr>
-                  <td>Alfreds Futterkiste</td>
-                  <td>Maria Anders</td>
-                  <td>Germany</td>
-                </tr>
-                <tr>
-                  <td>Centro comercial Moctezuma</td>
-                  <td>Francisco Chang</td>
-                  <td>Mexico</td>
-                </tr>
-              </table>
-        */
         let vehicles;
         let lines;
         fetch(API_BASE + "vehicles").then(r => r.json()).then(r => {
@@ -135,7 +116,7 @@
         }).then(() => div.innerHTML = table.outerHTML);
 
         regenGraph = async () => {
-            table.innerHTML = "<tr class=\"primary\"><th>Veículo</th><th>Zona</th><th>Operador</th><th>Modelo</th><th>Matrícula</th><th>Data de registo</th><th>Estado</th></tr>";
+            table.innerHTML = "<tr class=\"primary\"><th>Veículo</th><th>Zona</th><th>Operador</th><th>Modelo</th><th>Matrícula</th><th>Data de registo</th><th>Estado</th><th>Motorista</th><th>Garagem</th></tr>";
             if(lines.then) lines = await Promise.resolve(lines);
             vehicles.forEach(bus => {
                 if(bus.id.split("|")[1] === "UNAVAILABLE_VEHICLE_ID") return;
@@ -152,10 +133,26 @@
                 status = "N/A"
                 //if(bus.timestamp < (Date.now()/1000 - 24*60*60)) //bus.line_id = undefined;
                 if(bus.line_id) status = `<span class="line" style="background-color: ${lines.find(a => a.id === bus.line_id).color}">${bus.line_id}</span>`;
-                tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td><td>${status}</td><td>${bus.shift_id || "N/A"}</td>`
+                tr.innerHTML = `<td>${bus.id.split("|")[1]}</td><td>${bus.id[1]}</td><td>${bus.owner || "ERRO"}</td><td>${bus.make ? (bus.make + " - " + bus.model) : "Desconhecido"}</td><td>${bus.license_plate || "N/A"}</td><td>${bus.registration_date ? (bus.registration_date.substring(6, 8) + "/" + bus.registration_date.substring(4, 6) + "/" + bus.registration_date.substring(0, 4)) : "N/A"}</td><td>${status}</td><td>${bus.block_id || "N/A"}</td><td>${checkDepot(bus.block_id)}</td>`
                 table.appendChild(tr)
             })
             div.innerHTML = table.outerHTML
+
+            function checkDepot(b) {
+                if(!b) return "N/A"
+                let d = b.replaceAll("-","_").split("_")
+                let r = "Desconhecido"
+                switch(d[0]) {
+                    case "1":
+                        if(d[1][1] === "0" || d[1][1] === "1" || d[1][1] === "2" || d[1][1] === "4" || d[1][1] === "5" || d[1][1] === "7" || d[1][1] === "9") {
+                            r = "A1 - Q. Baixo"
+                        } else if(d[1][1] === "3" || d[1][1] === "7") {
+                            r = "A1 - Adroana"
+                        }
+                        break;
+                }
+                return r;
+            }
         }
     </script>
 </body>
